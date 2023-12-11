@@ -2,74 +2,66 @@ use std::collections::HashMap;
 
 use crate::utils::read_input;
 
-fn calculate_vec(vec: &mut Vec<String>) -> usize {
-    println!("calculating {:?}", vec);
-    let mut count = 0;
-    let mut first = vec.first_mut().cloned();
-    let last = vec.last();
-    if let Some(first) = first.as_mut() {
-        if let Some(last) = last {
-            first.push_str(last);
-        }
-        count += first.parse::<usize>().unwrap();
-    }
-    return count;
-}
-
-pub fn first_part(input: &Vec<String>) -> usize {
+pub fn first_part(input: &[String]) -> usize {
     let mut count = 0;
     input.iter().for_each(|line| {
-        let mut num_str = Vec::<String>::new();
+        let mut nums: Vec<usize> = Vec::new();
         line.split("").for_each(|x| {
-            if x.parse::<usize>().is_ok() {
-                num_str.push(x.into());
+            if let Ok(x) = x.parse::<usize>() {
+                nums.push(x);
             }
         });
-        count += calculate_vec(&mut num_str);
+        count += nums.first().unwrap() * 10 + nums.last().unwrap();
     });
     count
 }
 
-pub fn second_part(input: &Vec<String>) -> usize {
-    let mut mappings: HashMap<&str, &str> = [
-        ("one", "1"),
-        ("two", "2"),
-        ("three", "3"),
-        ("four", "4"),
-        ("five", "5"),
-        ("six", "6"),
-        ("seven", "7"),
-        ("eight", "8"),
-        ("nine", "9"),
+pub fn second_part(input: &[String]) -> usize {
+    let mappings: HashMap<&str, usize> = [
+        ("one", 1),
+        ("two", 2),
+        ("three", 3),
+        ("four", 4),
+        ("five", 5),
+        ("six", 6),
+        ("seven", 7),
+        ("eight", 8),
+        ("nine", 9),
     ]
     .iter()
     .cloned()
     .collect();
+
     let mut count = 0;
-    input.iter().for_each(|line| {
-        let mut num_vec = Vec::<String>::new();
-        let mut num_str = String::new();
-        line.split("").for_each(|x| {
-            num_str += x;
-            if x.parse::<usize>().is_ok() {
-                println!("value: {}", num_str);
-                num_vec.push(x.to_string());
-                num_str = String::new();
-            } else {
-                if let Some(value) = mappings.get_mut(num_str.as_str()) {
-                    println!("value: {}", num_str);
-                    num_vec.push(value.to_string());
-                    num_str = String::new();
+
+    for line in input.iter() {
+        let mut remaining_line = line.as_str();
+        let mut nums: Vec<usize> = Vec::new();
+
+        'outer: while !remaining_line.is_empty() {
+            for (word, num) in mappings.iter() {
+                if remaining_line.starts_with(word) {
+                    nums.push(*num);
+                    remaining_line = &remaining_line[word.len() - 1..];
+                    continue 'outer;
                 }
             }
-        });
-        count += calculate_vec(&mut num_vec);
-    });
+
+            let line_bytes = remaining_line.as_bytes();
+            if line_bytes[0].is_ascii_digit() {
+                let num = line_bytes[0] as char;
+                nums.push(num.to_digit(10).unwrap() as usize);
+            }
+            remaining_line = &remaining_line[1..];
+        }
+        let combined = nums.first().unwrap() * 10 + nums.last().unwrap();
+        count += combined;
+    }
     count
 }
 
 pub fn execute() {
-    let input = &read_input("input/example.txt");
+    let input = &read_input("input/day1.txt");
     let parts = (first_part(input), (second_part(input)));
     println!("Day 1, part 1: {}", parts.0);
     println!("Day 1, part 2: {}", parts.1);
